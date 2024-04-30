@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="Black">
+    <option name="sdkName" value="Python 3.12 (vms)" />
+  </component>
+  <component name="ProjectRootManager" version="2" project-jdk-name="Python 3.12 (vms)" project-jdk-type="Python SDK" />
+  <component name="ProjectUserFactors">
+    <factor id="completionFinishedType">
+      <dailyData date="04-07-2023">
+        <observation name="cancelled" value="4.0" />
+      </dailyData>
+      <dailyData date="05-07-2023">
+        <observation name="cancelled" value="2.0" />
+      </dailyData>
+    </factor>
+    <factor id="completionUsage">
+      <dailyData date="04-07-2023">
+        <observation name="count" value="4.0" />
+      </dailyData>
+      <dailyData date="05-07-2023">
+        <observation name="count" value="2.0" />
+      </dailyData>
+    </factor>
+    <factor id="timeBetweenTyping">
+      <dailyData date="04-07-2023">
+        <observation name="average" value="620.647059" />
+        <observation name="count" value="17.0" />
+      </dailyData>
+      <dailyData date="05-07-2023">
+        <observation name="average" value="1587.9" />
+        <observation name="count" value="10.0" />
+      </dailyData>
+    </factor>
+  </component>
+</project>

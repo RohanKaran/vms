@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .models import Vendor
-from .serializers import VendorSerializer, VendorPerformanceSerializer
+from .serializers import VendorPerformanceSerializer, VendorSerializer
 
 
 class VendorViewSet(viewsets.ModelViewSet):

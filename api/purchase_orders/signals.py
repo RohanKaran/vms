@@ -1,5 +1,5 @@
 from django.db.models import F
-from django.db.models.signals import post_delete, post_save
+from django.db.models.signals import post_delete, post_save, pre_save
 from django.dispatch import receiver
 
 from .models import PurchaseOrder
@@ -18,10 +18,12 @@ def update_performance_metrics(vendor):
     completed_pos = pos.filter(status="completed")
 
     on_time_deliveries = completed_pos.filter(
-        delivery_date__lte=F("order_date")
+        delivery_date__lte=F("expected_delivery_date")
     ).count()
     if completed_pos.count() > 0:
-        vendor.on_time_delivery_rate = on_time_deliveries / completed_pos.count()
+        vendor.on_time_delivery_rate = (
+            on_time_deliveries / completed_pos.count()
+        ) * 100
     else:
         vendor.on_time_delivery_rate = 0
 
@@ -46,7 +48,7 @@ def update_performance_metrics(vendor):
 
     successful_fulfillments = pos.filter(status="completed").count()
     if pos.count() > 0:
-        vendor.fulfillment_rate = successful_fulfillments / pos.count()
+        vendor.fulfillment_rate = (successful_fulfillments / pos.count()) * 100
     else:
         vendor.fulfillment_rate = 0
 

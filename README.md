@@ -60,7 +60,6 @@ vms/
 │   ├── urls.py
 │   ├── wsgi.py
 ├── .gitignore
-├── db.sqlite3
 ├── manage.py
 ├── README.md
 └── requirements.txt

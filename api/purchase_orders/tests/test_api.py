@@ -1,6 +1,7 @@
 import json
 
 from django.urls import reverse
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APITestCase
 
@@ -86,3 +87,20 @@ class PurchaseOrderTestCase(APITestCase):
         response = self.client.delete(url, format="json")
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertEqual(PurchaseOrder.objects.count(), 0)
+
+    def test_acknowledge_purchase_order(self):
+        self.purchase_order.issue_date = timezone.now() - timezone.timedelta(hours=1)
+        self.purchase_order.save()
+
+        url = reverse('acknowledge_purchase_order', args=[self.purchase_order.id])
+        response = self.client.post(url, format='json')
+
+        self.purchase_order.refresh_from_db()
+        acknowledgment_time = self.purchase_order.acknowledgment_date.timestamp()
+        current_time = timezone.now().timestamp()
+        self.assertTrue(abs(acknowledgment_time - current_time) < 10)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        self.vendor.refresh_from_db()
+        self.assertTrue(self.vendor.average_response_time > 0)

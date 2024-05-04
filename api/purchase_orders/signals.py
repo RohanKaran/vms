@@ -1,16 +1,28 @@
 from django.db.models import F
-from django.db.models.signals import post_delete, post_save, pre_save
+from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 
 from .models import PurchaseOrder
 
 
+@receiver(pre_save, sender=PurchaseOrder)
+def pre_save_purchase_order(sender, instance, **kwargs):
+    if instance.pk:
+        old_po = PurchaseOrder.objects.get(pk=instance.pk)
+        instance._old_status = old_po.status
+    else:
+        instance._old_status = None
+
+
 @receiver(post_save, sender=PurchaseOrder)
-@receiver(post_delete, sender=PurchaseOrder)
-def update_vendor_performance(sender, instance, **kwargs):
-    if instance.vendor:
-        vendor = instance.vendor
-        update_performance_metrics(vendor)
+def update_vendor_performance(sender, instance, created, **kwargs):
+    old_status = getattr(instance, "_old_status", None)
+    new_status = instance.status
+    if old_status != new_status and (
+        new_status == "completed" or old_status == "completed"
+    ):
+        if instance.vendor:
+            update_performance_metrics(instance.vendor)
 
 
 def update_performance_metrics(vendor):
@@ -21,9 +33,7 @@ def update_performance_metrics(vendor):
         delivery_date__lte=F("expected_delivery_date")
     ).count()
     if completed_pos.count() > 0:
-        vendor.on_time_delivery_rate = (
-            on_time_deliveries / completed_pos.count()
-        ) * 100
+        vendor.on_time_delivery_rate = on_time_deliveries / completed_pos.count() * 100
     else:
         vendor.on_time_delivery_rate = 0
 
@@ -35,20 +45,9 @@ def update_performance_metrics(vendor):
     else:
         vendor.quality_rating_avg = 0
 
-    response_times = [
-        po.acknowledgment_date - po.issue_date
-        for po in pos
-        if po.acknowledgment_date is not None
-    ]
-    if response_times:
-        total_seconds = sum([rt.total_seconds() for rt in response_times])
-        vendor.average_response_time = total_seconds / len(response_times)
-    else:
-        vendor.average_response_time = 0
-
     successful_fulfillments = pos.filter(status="completed").count()
     if pos.count() > 0:
-        vendor.fulfillment_rate = (successful_fulfillments / pos.count()) * 100
+        vendor.fulfillment_rate = successful_fulfillments / pos.count() * 100
     else:
         vendor.fulfillment_rate = 0
 

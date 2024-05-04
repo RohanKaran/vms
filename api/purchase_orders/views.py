@@ -1,5 +1,6 @@
 from django.utils import timezone
-from rest_framework import status, viewsets
+from rest_framework import permissions, status, viewsets
+from rest_framework.authentication import TokenAuthentication
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -10,9 +11,14 @@ from .serializers import PurchaseOrderSerializer
 class PurchaseOrderViewSet(viewsets.ModelViewSet):
     queryset = PurchaseOrder.objects.all()
     serializer_class = PurchaseOrderSerializer
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
 
 
 class AcknowledgePurchaseOrderAPIView(APIView):
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
+
     def post(self, request, po_id):
         try:
             purchase_order = PurchaseOrder.objects.get(pk=po_id)

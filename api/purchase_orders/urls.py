@@ -1,7 +1,7 @@
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
-from .views import PurchaseOrderViewSet, AcknowledgePurchaseOrderAPIView
+from .views import AcknowledgePurchaseOrderAPIView, PurchaseOrderViewSet
 
 router = DefaultRouter()
 router.register(r"", PurchaseOrderViewSet)

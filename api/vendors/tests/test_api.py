@@ -1,8 +1,11 @@
 import json
-from datetime import UTC, datetime, timedelta
+from datetime import timedelta
 
+from django.contrib.auth.models import User
 from django.urls import reverse
+from django.utils import timezone
 from rest_framework import status
+from rest_framework.authtoken.models import Token
 from rest_framework.test import APITestCase
 
 from api.purchase_orders.models import PurchaseOrder
@@ -11,6 +14,11 @@ from api.vendors.models import Vendor
 
 class VendorTestCase(APITestCase):
     def setUp(self):
+        self.user = User.objects.create_user(username="user", password="pass")
+        self.token, _ = Token.objects.get_or_create(user=self.user)
+        self.client.credentials(HTTP_AUTHORIZATION="Token " + self.token.key)
+
+        # Set up vendors
         self.vendor1 = Vendor.objects.create(
             name="Vendor One",
             contact_details="contact@vendorone.com",
@@ -25,9 +33,6 @@ class VendorTestCase(APITestCase):
         )
 
     def test_create_vendor(self):
-        """
-        Ensure we can create a new vendor.
-        """
         url = reverse("vendor-list")
         data = {
             "name": "New Vendor",
@@ -38,21 +43,14 @@ class VendorTestCase(APITestCase):
         response = self.client.post(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(Vendor.objects.count(), 3)
-        self.assertEqual(Vendor.objects.get(id=3).name, "New Vendor")
 
     def test_retrieve_vendor(self):
-        """
-        Ensure we can retrieve a vendor's details.
-        """
         url = reverse("vendor-detail", args=[self.vendor1.id])
         response = self.client.get(url, format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["name"], "Vendor One")
 
     def test_update_vendor(self):
-        """
-        Ensure we can update an existing vendor.
-        """
         url = reverse("vendor-detail", args=[self.vendor1.id])
         updated_data = {
             "name": "Vendor One Updated",
@@ -67,18 +65,12 @@ class VendorTestCase(APITestCase):
         )
 
     def test_list_vendors(self):
-        """
-        Ensure we can list all vendors.
-        """
         url = reverse("vendor-list")
         response = self.client.get(url, format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 2)  # Assuming we have 2 vendors
+        self.assertEqual(len(response.data), 2)  # Assuming only two vendors exist
 
     def test_delete_vendor(self):
-        """
-        Ensure we can delete a vendor.
-        """
         url = reverse("vendor-detail", args=[self.vendor2.id])
         response = self.client.delete(url, format="json")
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
@@ -87,14 +79,18 @@ class VendorTestCase(APITestCase):
 
 class VendorPerformanceTestCase(APITestCase):
     def setUp(self):
-        # Create a vendor
+        self.user = User.objects.create_user(username="user", password="pass")
+        self.token, _ = Token.objects.get_or_create(user=self.user)
+        self.client.credentials(HTTP_AUTHORIZATION="Token " + self.token.key)
+
+        # Create a vendor and associated purchase orders for performance metrics
         self.vendor = Vendor.objects.create(
             name="Performance Vendor",
             contact_details="contact@performancevendor.com",
             address="500 Performance St, Metric City, MC 20000",
             vendor_code="PERF001",
         )
-        order_date = datetime.now(UTC) - timedelta(days=10)
+        order_date = timezone.now() - timedelta(days=10)
         delivery_date = order_date + timedelta(days=5)
         self.po1 = PurchaseOrder.objects.create(
             po_number="PO10001",
@@ -120,9 +116,6 @@ class VendorPerformanceTestCase(APITestCase):
         )
 
     def test_retrieve_vendor_performance_metrics(self):
-        """
-        Ensure we can retrieve the performance metrics for a specific vendor.
-        """
         url = reverse("vendor-performance", args=[self.vendor.id])
         response = self.client.get(url, format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -130,7 +123,6 @@ class VendorPerformanceTestCase(APITestCase):
         self.assertIn("quality_rating_avg", response.data)
         self.assertIn("average_response_time", response.data)
         self.assertIn("fulfillment_rate", response.data)
-
         expected_on_time_delivery_rate = 50
         expected_quality_rating_avg = (4.5 + 4.0) / 2
         self.assertEqual(

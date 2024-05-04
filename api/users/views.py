@@ -1,5 +1,6 @@
 from django.contrib.auth.models import User
-from rest_framework import generics
+from rest_framework import generics, permissions
+from rest_framework.authentication import TokenAuthentication
 
 from .serializers import UserSerializer
 
